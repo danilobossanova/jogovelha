@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerScoreElement = document.getElementById("playerScore");
     const aiScoreElement = document.getElementById("aiScore");
     const tieScoreElement = document.getElementById("tieScore");
+    const moveAnalysis = document.getElementById("moveAnalysis");
 
     let board, playerScore = 0, aiScore = 0, tieScore = 0;
     const player = "X";
@@ -23,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Inicializa o tabuleiro com valores de 0 a 8
         board = Array.from(Array(9).keys());
         gameStatus.innerText = "";
+        moveAnalysis.innerText = "";
         gameBoard.innerHTML = "";
 
         // Cria as células do tabuleiro e adiciona eventos de clique
@@ -76,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
         gameBoard.removeEventListener("click", handleTurnClick, false);
         declareWinner(gameWon.player === player ? "Você ganhou!" : "Você perdeu.");
         updateScore(gameWon.player);
+        if (gameWon.player === ai) analyzeBestMove();
     }
 
     // Função que declara o vencedor
@@ -174,6 +177,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         return moves[bestMove];
+    }
+
+    // Função que analisa a melhor jogada que o jogador poderia ter feito
+    function analyzeBestMove() {
+        // Copia do tabuleiro para análise
+        let analysisBoard = board.slice();
+        let bestMove = null;
+        let bestScore = -10000;
+
+        // Analisa todas as jogadas possíveis do jogador
+        for (let i = 0; i < 9; i++) {
+            if (typeof analysisBoard[i] === 'number') {
+                analysisBoard[i] = player;
+                let score = minimax(analysisBoard, ai).score;
+                analysisBoard[i] = i;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = i;
+                }
+            }
+        }
+
+        // Exibe a análise da jogada
+        if (bestMove !== null) {
+            moveAnalysis.innerText = `A melhor jogada que você poderia ter feito foi na posição ${bestMove}.`;
+        } else {
+            moveAnalysis.innerText = `Nenhuma jogada possível poderia ter mudado o resultado.`;
+        }
     }
 
     // Inicia o jogo pela primeira vez
