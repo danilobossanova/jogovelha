@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const aiScoreElement = document.getElementById("aiScore");
     const tieScoreElement = document.getElementById("tieScore");
     const moveAnalysis = document.getElementById("moveAnalysis");
+    const playerXWinChance = document.getElementById("playerXWinChance");
+    const playerOWinChance = document.getElementById("playerOWinChance");
 
     let board, playerScore = 0, aiScore = 0, tieScore = 0;
     const player = "X";
@@ -26,6 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
         gameStatus.innerText = "";
         moveAnalysis.innerText = "";
         gameBoard.innerHTML = "";
+        playerXWinChance.innerText = "50%";
+        playerOWinChance.innerText = "50%";
 
         // Cria as células do tabuleiro e adiciona eventos de clique
         for (let i = 0; i < 9; i++) {
@@ -53,7 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
         board[index] = currentPlayer;
         document.querySelector(`[data-index='${index}']`).innerText = currentPlayer;
         let gameWon = checkWin(board, currentPlayer);
-        if (gameWon) endGame(gameWon);
+        if (gameWon) {
+            endGame(gameWon);
+        } else {
+            updateWinChances();
+        }
     }
 
     // Função que verifica se houve um vencedor
@@ -62,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let gameWon = null;
         for (let [index, win] of winCombos.entries()) {
             if (win.every(elem => plays.indexOf(elem) > -1)) {
-                gameWon = {index: index, player: player};
+                gameWon = { index: index, player: player };
                 break;
             }
         }
@@ -75,10 +83,12 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelector(`[data-index='${index}']`).style.backgroundColor =
                 gameWon.player === player ? "blue" : "red";
         }
-        gameBoard.removeEventListener("click", handleTurnClick, false);
+        gameBoard.querySelectorAll(".cell").forEach(cell => cell.removeEventListener("click", handleTurnClick, false));
         declareWinner(gameWon.player === player ? "Você ganhou!" : "Você perdeu.");
         updateScore(gameWon.player);
-        if (gameWon.player === ai) analyzeBestMove();
+        if (gameWon.player === ai || gameWon.player === player) {
+            analyzeBestMove();
+        }
     }
 
     // Função que declara o vencedor
@@ -116,6 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             declareWinner("Empate!");
             updateTieScore(); // Atualiza o placar de empates
+            analyzeBestMove(); // Analisa a melhor jogada mesmo em caso de empate
             return true;
         }
         return false;
@@ -127,16 +138,55 @@ document.addEventListener("DOMContentLoaded", () => {
         tieScoreElement.innerText = tieScore;
     }
 
+    // Função que atualiza as chances de vitória
+    function updateWinChances() {
+        let playerWinChance = calculateWinChance(board, player);
+        let aiWinChance = calculateWinChance(board, ai);
+        playerXWinChance.innerText = `${playerWinChance}%`;
+        playerOWinChance.innerText = `${aiWinChance}%`;
+    }
+
+    // Função que calcula a chance de vitória de um jogador
+    function calculateWinChance(board, currentPlayer) {
+        let availableSpots = emptySquares().length;
+        let winChance = 0;
+
+        if (availableSpots === 0) {
+            return 0;
+        }
+
+        winCombos.forEach(combo => {
+            let playerCount = 0;
+            let emptyCount = 0;
+
+            combo.forEach(index => {
+                if (board[index] === currentPlayer) {
+                    playerCount++;
+                } else if (typeof board[index] === 'number') {
+                    emptyCount++;
+                }
+            });
+
+            if (playerCount === 2 && emptyCount === 1) {
+                winChance += 50;
+            } else if (playerCount === 1 && emptyCount === 2) {
+                winChance += 25;
+            }
+        });
+
+        return winChance;
+    }
+
     // Algoritmo minimax para determinar a melhor jogada
     function minimax(newBoard, currentPlayer) {
         let availSpots = emptySquares();
 
         if (checkWin(newBoard, player)) {
-            return {score: -10};
+            return { score: -10 };
         } else if (checkWin(newBoard, ai)) {
-            return {score: 10};
+            return { score: 10 };
         } else if (availSpots.length === 0) {
-            return {score: 0};
+            return { score: 0 };
         }
 
         let moves = [];
@@ -159,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let bestMove;
         if (currentPlayer === ai) {
-            let bestScore = -10000;
+            let bestScore = -Infinity;
             for (let i = 0; i < moves.length; i++) {
                 if (moves[i].score > bestScore) {
                     bestScore = moves[i].score;
@@ -167,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         } else {
-            let bestScore = 10000;
+            let bestScore = Infinity;
             for (let i = 0; i < moves.length; i++) {
                 if (moves[i].score < bestScore) {
                     bestScore = moves[i].score;
@@ -181,12 +231,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Função que analisa a melhor jogada que o jogador poderia ter feito
     function analyzeBestMove() {
-        // Copia do tabuleiro para análise
         let analysisBoard = board.slice();
         let bestMove = null;
         let bestScore = -10000;
 
-        // Analisa todas as jogadas possíveis do jogador
         for (let i = 0; i < 9; i++) {
             if (typeof analysisBoard[i] === 'number') {
                 analysisBoard[i] = player;
@@ -199,7 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Exibe a análise da jogada
         if (bestMove !== null) {
             moveAnalysis.innerText = `A melhor jogada que você poderia ter feito foi na posição ${bestMove}.`;
         } else {

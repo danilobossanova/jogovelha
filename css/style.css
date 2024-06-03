@@ -45,3 +45,26 @@ body {
     font-size: 1.5rem;
     font-weight: bold;
 }
+
+#gameStatus {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+}
+
+.playerXStatus {
+    color: #007bff; /* Cor azul para o jogador X */
+}
+
+.playerOStatus {
+    color: #dc3545; /* Cor vermelha para o jogador O */
+}
+
+/* Estilos responsivos */
+@media only screen and (max-width: 600px) {
+    #gameStatus {
+        font-size: 1.2rem;
+        padding: 10px;
+    }
+}
