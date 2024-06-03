@@ -1,0 +1,47 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.grid-template-columns-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+}
+
+#gameBoard .cell {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    font-size: 2rem;
+    cursor: pointer;
+    position: relative;
+}
+
+#gameBoard .cell:not(:nth-child(3n))::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    width: 1px;
+    height: 100%;
+    background-color: black;
+}
+
+#gameBoard .cell:not(:nth-last-child(-n+3))::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    height: 1px;
+    width: 100%;
+    background-color: black;
+}
+
+#gameStatus {
+    font-size: 1.5rem;
+    font-weight: bold;
+}

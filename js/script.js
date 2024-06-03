@@ -1,0 +1,173 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const gameBoard = document.getElementById("gameBoard");
+    const gameStatus = document.getElementById("gameStatus");
+    const restartButton = document.getElementById("restartButton");
+    const playerScoreElement = document.getElementById("playerScore");
+    const aiScoreElement = document.getElementById("aiScore");
+
+    let board, playerScore = 0, aiScore = 0;
+    const player = "X";
+    const ai = "O";
+    const winCombos = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+    ];
+
+    // Inicia o jogo ao clicar no botão reiniciar
+    restartButton.addEventListener("click", startGame);
+
+    // Função para iniciar o jogo
+    function startGame() {
+        // Inicializa o tabuleiro com valores de 0 a 8
+        board = Array.from(Array(9).keys());
+        gameStatus.innerText = "";
+        gameBoard.innerHTML = "";
+
+        // Cria as células do tabuleiro e adiciona eventos de clique
+        for (let i = 0; i < 9; i++) {
+            let cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.dataset.index = i;
+            cell.addEventListener("click", handleTurnClick, false);
+            gameBoard.appendChild(cell);
+        }
+    }
+
+    // Função que lida com o clique do jogador
+    function handleTurnClick(event) {
+        let index = event.target.dataset.index;
+        if (typeof board[index] === 'number') {
+            // Jogada do jogador
+            takeTurn(index, player);
+            // Jogada da IA se o jogo não estiver ganho ou empatado
+            if (!checkWin(board, player) && !checkTie()) takeTurn(bestSpot(), ai);
+        }
+    }
+
+    // Função que executa uma jogada
+    function takeTurn(index, currentPlayer) {
+        board[index] = currentPlayer;
+        document.querySelector(`[data-index='${index}']`).innerText = currentPlayer;
+        let gameWon = checkWin(board, currentPlayer);
+        if (gameWon) endGame(gameWon);
+    }
+
+    // Função que verifica se houve um vencedor
+    function checkWin(board, player) {
+        let plays = board.reduce((a, e, i) => (e === player) ? a.concat(i) : a, []);
+        let gameWon = null;
+        for (let [index, win] of winCombos.entries()) {
+            if (win.every(elem => plays.indexOf(elem) > -1)) {
+                gameWon = {index: index, player: player};
+                break;
+            }
+        }
+        return gameWon;
+    }
+
+    // Função que finaliza o jogo
+    function endGame(gameWon) {
+        for (let index of winCombos[gameWon.index]) {
+            document.querySelector(`[data-index='${index}']`).style.backgroundColor =
+                gameWon.player === player ? "blue" : "red";
+        }
+        gameBoard.removeEventListener("click", handleTurnClick, false);
+        declareWinner(gameWon.player === player ? "Você ganhou!" : "Você perdeu.");
+        updateScore(gameWon.player);
+    }
+
+    // Função que declara o vencedor
+    function declareWinner(who) {
+        gameStatus.innerText = who;
+    }
+
+    // Função que atualiza o placar
+    function updateScore(winner) {
+        if (winner === player) {
+            playerScore++;
+            playerScoreElement.innerText = playerScore;
+        } else {
+            aiScore++;
+            aiScoreElement.innerText = aiScore;
+        }
+    }
+
+    // Função que retorna as células vazias
+    function emptySquares() {
+        return board.filter(s => typeof s === 'number');
+    }
+
+    // Função que retorna a melhor jogada da IA
+    function bestSpot() {
+        return minimax(board, ai).index;
+    }
+
+    // Função que verifica se houve um empate
+    function checkTie() {
+        if (emptySquares().length === 0) {
+            for (let cell of document.querySelectorAll(".cell")) {
+                cell.style.backgroundColor = "green";
+                cell.removeEventListener("click", handleTurnClick, false);
+            }
+            declareWinner("Empate!");
+            return true;
+        }
+        return false;
+    }
+
+    // Algoritmo minimax para determinar a melhor jogada
+    function minimax(newBoard, currentPlayer) {
+        let availSpots = emptySquares();
+
+        if (checkWin(newBoard, player)) {
+            return {score: -10};
+        } else if (checkWin(newBoard, ai)) {
+            return {score: 10};
+        } else if (availSpots.length === 0) {
+            return {score: 0};
+        }
+
+        let moves = [];
+        for (let i = 0; i < availSpots.length; i++) {
+            let move = {};
+            move.index = newBoard[availSpots[i]];
+            newBoard[availSpots[i]] = currentPlayer;
+
+            if (currentPlayer === ai) {
+                let result = minimax(newBoard, player);
+                move.score = result.score;
+            } else {
+                let result = minimax(newBoard, ai);
+                move.score = result.score;
+            }
+
+            newBoard[availSpots[i]] = move.index;
+            moves.push(move);
+        }
+
+        let bestMove;
+        if (currentPlayer === ai) {
+            let bestScore = -10000;
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].score > bestScore) {
+                    bestScore = moves[i].score;
+                    bestMove = i;
+                }
+            }
+        } else {
+            let bestScore = 10000;
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].score < bestScore) {
+                    bestScore = moves[i].score;
+                    bestMove = i;
+                }
+            }
+        }
+
+        return moves[bestMove];
+    }
+
+    // Inicia o jogo pela primeira vez
+    startGame();
+});
