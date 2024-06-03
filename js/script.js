@@ -4,8 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const restartButton = document.getElementById("restartButton");
     const playerScoreElement = document.getElementById("playerScore");
     const aiScoreElement = document.getElementById("aiScore");
+    const tieScoreElement = document.getElementById("tieScore");
 
-    let board, playerScore = 0, aiScore = 0;
+    let board, playerScore = 0, aiScore = 0, tieScore = 0;
     const player = "X";
     const ai = "O";
     const winCombos = [
@@ -87,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (winner === player) {
             playerScore++;
             playerScoreElement.innerText = playerScore;
-        } else {
+        } else if (winner === ai) {
             aiScore++;
             aiScoreElement.innerText = aiScore;
         }
@@ -111,9 +112,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 cell.removeEventListener("click", handleTurnClick, false);
             }
             declareWinner("Empate!");
+            updateTieScore(); // Atualiza o placar de empates
             return true;
         }
         return false;
+    }
+
+    // Função que atualiza o placar de empates
+    function updateTieScore() {
+        tieScore++;
+        tieScoreElement.innerText = tieScore;
     }
 
     // Algoritmo minimax para determinar a melhor jogada
